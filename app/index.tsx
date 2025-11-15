@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { Image, Text, TouchableOpacity, View } from "react-native";
-import { styles } from "./_layout";
+import { styles } from "./layout";
 
 export default function Index() {
   return (
@@ -16,7 +16,9 @@ export default function Index() {
         resizeMode="contain"
       />
 
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity 
+        style={styles.button}
+        onPress={() => router.push("/signup")}>
         <Text style={styles.buttonText}>Sign up</Text>
       </TouchableOpacity>
 
