@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import { styles } from "./layout";
 
@@ -6,7 +7,7 @@ export default function Login() {
     <View style={styles.container}>
         <Text style={styles.title}>Sign in</Text>
         <TextInput 
-            placeholder="Username" 
+            placeholder="Username@gmail.com" 
             placeholderTextColor="#777"
             style={styles.username}> 
         </TextInput>
@@ -20,6 +21,13 @@ export default function Login() {
       <TouchableOpacity style={styles.button}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
+      <TouchableOpacity 
+        style ={styles.button}
+        onPress={() => router.push("/forgotpassword")}
+        >
+        <Text style={styles.buttonText}>Forgot Password</Text>
+      </TouchableOpacity>
+      
     </View>
   );
 }
