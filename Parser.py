@@ -1,77 +1,88 @@
+import re
 from models import PlayerAdvice
 
 def parse_ai_response(ai_text: str):
+    """
+    A SAFE parser that:
+    - never crashes
+    - extracts players even if Gemini formatting changes
+    - extracts advice sections reliably
+    """
+
     players_list = []
     advice_list = []
 
     # -----------------------------
-    # PARSE PLAYERS SECTION
+    # EXTRACT PLAYERS
     # -----------------------------
-    start = ai_text.find("PLAYERS:")
-    end = ai_text.find("ANALYSIS SUMMARY")
+    players_pattern = r"PLAYERS:\s*(.*?)\n\s*ANALYSIS"
+    players_match = re.search(players_pattern, ai_text, re.DOTALL | re.IGNORECASE)
 
-    if start == -1 or end == -1:
-        return [], []
+    if players_match:
+        players_block = players_match.group(1)
+        for line in players_block.split("\n"):
+            line = line.strip()
+            if line.startswith("-"):
+                line = line[1:].strip()
 
-    players_chunk = ai_text[start + len("PLAYERS:"): end]
+                # Remove position if present
+                name = re.split(r"[—\-]", line)[0].strip()
+                if name:
+                    players_list.append(name)
 
-    for line in players_chunk.split("\n"):
-        line = line.strip()
-        if line.startswith("-"):
-            raw = line[1:].strip()
-
-            # FIX: support both em dash and hyphen
-            name = raw.split("—")[0].split("-")[0].strip()
-
-            players_list.append(name)
+    # Fallback: if AI did not include PLAYERS: section
+    if not players_list:
+        # Try to find names in advice section
+        possible_names = re.findall(r"-\s*([A-Za-z '.]+):", ai_text)
+        players_list = list(set(n.strip() for n in possible_names))
 
     # -----------------------------
-    # PARSE ADVICE SECTION
+    # EXTRACT ADVICE BLOCKS
     # -----------------------------
-    starx = ai_text.find("ADVICE:")
-    if starx == -1:
-        return players_list, []
+    advice_pattern = r"ADVICE:\s*(.*)"
+    advice_match = re.search(advice_pattern, ai_text, re.DOTALL | re.IGNORECASE)
 
-    advice_section = ai_text[starx + len("ADVICE:"):]
+    if not advice_match:
+        # If no advice section, return at least players
+        return players_list, advice_list
 
-    # Split into each player block
-    blocks = advice_section.split("\n-")
-    use_blocks = blocks[1:]  # skip text before first dash
+    advice_block = advice_match.group(1)
 
-    for inside in use_blocks:
-        lines = [l.strip() for l in inside.splitlines() if l.strip()]
+    # Split blocks: each starts with "- Player Name:"
+    entries = re.split(r"\n-\s*", advice_block)
+    entries = entries[1:]  # first chunk is empty text before the first "-"
 
+    for entry in entries:
+        lines = [l.strip() for l in entry.splitlines() if l.strip()]
         if not lines:
             continue
 
-        # First line contains: "PlayerName: <something>"
-        name_line = lines[0]
-        name = name_line.split(":", 1)[0].strip()
+        # First line: "Player Name:"
+        name = lines[0].replace(":", "").strip()
 
         recommendation = ""
         explanation = ""
         confidence = 0.0
 
         for line in lines[1:]:
-            if line.startswith("Recommendation"):
+            if line.lower().startswith("recommendation"):
                 recommendation = line.split(":", 1)[1].strip()
 
-            elif line.startswith("Explanation"):
+            elif line.lower().startswith("explanation"):
                 explanation = line.split(":", 1)[1].strip()
 
-            elif line.startswith("Confidence"):
+            elif line.lower().startswith("confidence"):
                 try:
                     confidence = float(line.split(":", 1)[1].strip())
                 except:
                     confidence = 0.0
 
-        # Now matches your updated PlayerAdvice model (player is a string)
         advice_list.append(
             PlayerAdvice(
                 player=name,
                 recommendation=recommendation,
                 explanation=explanation,
-                confidence=confidence
+                confidence=confidence,
             )
         )
 
