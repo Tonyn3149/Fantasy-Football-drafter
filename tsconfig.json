@@ -17,8 +17,7 @@
     "app/**/*.ts",
     "app/**/*.tsx",
     "config/**/*.ts",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    ".expo/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
