@@ -54,7 +54,7 @@ export default function Login() {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+      <TouchableOpacity style={styles.button} onPress={() => router.push("/empty")}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
 

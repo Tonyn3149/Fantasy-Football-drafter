@@ -73,4 +73,9 @@ export const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
   },
+  text: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#333',
+  },
 });
